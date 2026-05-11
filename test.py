@@ -74,4 +74,3 @@ class User():
                 self.__seconds % 60
             )
         return self.__seconds
-    

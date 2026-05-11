@@ -14,12 +14,10 @@ def mange_conf(id):
         return dict(config['GLOBAL PAY OPTIONS'])
 
 
-print(mange_conf(22), mange_conf(2))
-
 def change_color(e: tk.Event):
     
     if e.type == EventType.Enter:
-        e.widget['bg'] = '#E1E1E1'        
+        e.widget['bg'] = '#E1E1E1'
     elif e.type == EventType.Leave:
         e.widget['bg'] = BG
 
@@ -99,7 +97,7 @@ def lable_click_vf(e: tk.Event):
         code_not_active(code, user_data['name'])
         lable_user_name['text'] = 'יתרתך ₪{}'.format(int((user_data['ytra']) + status[1]))
         input_user_name.place(width=0)
-    
+
     if status_charge:
         lable_ytra['text'] = 'טעינה בוצעה בהצלחה'
         lable_under['text'] = ''
@@ -121,16 +119,15 @@ def c_f_code(e: tk.Event):
     link_file = f'{USER_DESKTOP}\\codes{user_data["name"]}.txt'
     manager = user_data['id']
 
-    payments = {3: [5], 4: [5,10], 22: [5,10]}
-    limits = {3: 5, 4: 10, 22: 10}
+    if str(manager) not in config.sections():
+        section = 'GLOBAL PAY OPTIONS'
+    else:
+        section = str(manager)
 
-    if str(manager) in config.sections():
-        print(config.get('GLOBAL PAY OPTIONS', 'payments'))
+    payments = [int(i) for i in config[section]['payments'].split(',')]
+    limits = int(config[section]['limit'])
 
-    payment = payments[manager]
-    limit = limits[manager]
-
-    create_file_of_codes(code_file, link_file, manager, payment, limit)
+    create_file_of_codes(code_file, link_file, manager, payments, limits)
     lable_under['text'] = 'קודים נוצרו בהצלחה'
 
 
@@ -160,26 +157,6 @@ def kill_process(e):
 
 def manager_settings(e: tk.Event):
 
-
-    def active_set(e: tk.Event):
-
-        try:
-            [int(i) for i in pay_ent.get().split(',')]
-            int(lim_ent.get())
-        except:
-            return
-        
-        if not str(user_data['id']) in config.sections():
-            config[str(user_data['id'])] = {}
-
-        config[str(user_data['id'])]['payments'] = pay_ent.get()
-        config[str(user_data['id'])]['limit'] = lim_ent.get()
-
-        with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
-            config.write(f)
-
-        root.quit()
-
     setting_click['text'] = 'אישור'
     kill_program_click.destroy()
     mnager_click.destroy()
@@ -187,22 +164,39 @@ def manager_settings(e: tk.Event):
     payments = settings['payments']
     limit = settings['limit']
 
-
-    pay_ent = tk.Entry(root, font='Calibri 18 bold')
     pay_ent.place(width=80, height=30, x=5, y=150)
     pay_ent.insert(0,payments)
 
-    pay_lab = tk.Label(root, text=':סוגי קודים להנפקה\nמספרים מופרדים\nבפסיק', font='Calibri 11')
+    pay_lab['text'] = ':סוגי קודים להנפקה\nמספרים מופרדים\nבפסיק'
     pay_lab.place(width=110, height=50, x=90, y=150)
 
-    lim_ent = tk.Entry(root, font='Calibri 18 bold')
     lim_ent.place(width=80, height=30, x=5, y=220)
     lim_ent.insert(0, limit)
 
-    lim_lab = tk.Label(root, text=':כמות מכל סוג', font='Calibri 11')
+    lim_lab['text'] = ':כמות קודים מכל סוג'
     lim_lab.place(width=110, height=30, x=90, y=220)
 
     setting_click.bind('<Button-1>', active_set)
+
+
+def active_set(e: tk.Event):
+
+    try:
+        [int(i) for i in pay_ent.get().split(',')]
+        int(lim_ent.get())
+    except:
+        return
+
+    if not str(user_data['id']) in config.sections():
+        config[str(user_data['id'])] = {}
+
+    config[str(user_data['id'])]['payments'] = pay_ent.get()
+    config[str(user_data['id'])]['limit'] = lim_ent.get()
+
+    with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
+        config.write(f)
+
+    root.quit()
 
 
 def admin_login(e: tk.Event):
@@ -250,8 +244,10 @@ root.title('טעינה')
 root.geometry('200x300')
 root.resizable(False, False)
 root['bg'] = BG
+root.iconbitmap('icon.ico')
 
-lable_high = tk.Label(root, text='טעינה באמצעות קוד', font='Calibri 14 bold', bg=BG)
+
+lable_high = tk.Label(root, text='טעינה באמצעות קוד', font=FONT + ' bold', bg=BG)
 lable_high.place(height=25, width=200, x=0, y=20)
 
 lable_user_name = tk.Label(root, text='ברוך הבא', font=FONT, bg=BG)
@@ -273,6 +269,13 @@ lable_under.place(width=200, height=25, x=0, y=205)
 mnager_click = tk.Label(root, text='ניהול', font='Calibri 18 bold', bg=BG)
 kill_program_click = tk.Label(root, text='מחשב', font='Calibri 18 bold', bg=BG)
 setting_click = tk.Label(root, text='הגדרות', font='Calibri 18 bold', bg=BG)
+
+# Elements for addmin settings
+pay_ent = tk.Entry(root, font='Calibri 18 bold')
+pay_lab = tk.Label(root, font='Calibri 11')
+lim_ent = tk.Entry(root, font='Calibri 18 bold')
+lim_lab = tk.Label(root, font='Calibri 11')
+
 
 lable_click.bind('<Enter>', change_color)
 lable_click.bind('<Leave>', change_color)

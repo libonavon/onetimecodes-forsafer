@@ -4,10 +4,7 @@ from test import User
 from configparser import ConfigParser
 
 
-def create_codes(pay, sum=20, manager=22):
-
-    if pay not in PAY_OPTIONS:
-        return False
+def create_codes(pay, sum, manager):
     
     con = sqlite3.connect(DB_PATH)
     cur = con.cursor()
@@ -21,15 +18,15 @@ def create_codes(pay, sum=20, manager=22):
 
     exe = 'INSERT INTO codes VALUES (?, ?, ?, 1, 0, 0)'
     for _ in range(sum):
-        cur.execute(exe, (str(randint(0,9999)).zfill(4), pay, manager,))
-        
+        cur.execute(exe, (str(randint(0,999999)).zfill(6), pay, manager,))
+
     con.commit()
     con.close()
 
     return True
 
 
-def get_string_of_codes(payment=[5,10,20], limit=20, manager=22):
+def get_string_of_codes(payment, limit, manager):
 
     con = sqlite3.connect(DB_PATH)
     cur = con.cursor()
@@ -137,7 +134,7 @@ def get_code(setting_file):
 
 def start():
 
-    global DB_PATH, PAY_OPTIONS, SAFER_DB_PATH, SETTINGS_FILE, USERS_BLACKLIST, LINK_USERS_BLACKLIST, PROGRAM_DATA_BASE, USER_DESKTOP, CONFIG_PATH, config
+    global DB_PATH, SAFER_DB_PATH, SETTINGS_FILE, USERS_BLACKLIST, LINK_USERS_BLACKLIST, PROGRAM_DATA_BASE, USER_DESKTOP, CONFIG_PATH, config
 
     current_path = os.environ['userprofile']
     CONFIG_PATH = f'{current_path}\\cfs_config.ini'
@@ -174,7 +171,6 @@ def start():
     # PROGRAM_DATA = os.environ['PROGRAMDATA']
     # USER_PROFILE = os.environ['USERPROFILE']
     DB_PATH = paths['db_path']
-    PAY_OPTIONS = [5,10,20]
     SAFER_DB_PATH = paths['safer_db_path']
     SETTINGS_FILE = paths['settings_file']
     USERS_BLACKLIST = paths['users_blacklist']

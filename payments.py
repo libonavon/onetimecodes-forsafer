@@ -1,6 +1,5 @@
 import sqlite3, datetime, os
 from random import randint
-from test import User
 from configparser import ConfigParser
 
 
@@ -76,26 +75,6 @@ def find_if_code_is_true(code):
     if bool(text):
         return True, text[0][1]
     else: return False, 0
-
-
-def get_user_data(user_name):
-
-    user_data = {}
-
-    user = User(user_name=user_name, password_required=False)
-
-    user_data['id'] = user.get_id()
-    user_data['name'] = user.get_full_name()
-    user_data['username'] = user_name
-    user_data['usertype'] = user.is_admin()
-    user_data['count'] = 0
-
-    try:
-        user_data['ytra'] = user.get_ytra()
-    except Exception as TypeError:
-        user_data['ytra'] = 0
-
-    return user_data
 
 
 def create_file_of_codes(file_path, link_file_path, manager, payment, limit):

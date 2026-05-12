@@ -1,4 +1,4 @@
-import sqlite3, os
+import sqlite3, os, requests
 
 
 DB_PATH = f'{os.environ['PROGRAMDATA']}\\KioskTorani\\LocalSaferServer.db'
@@ -14,6 +14,7 @@ class User():
 
         self.__con = sqlite3.connect(DB_PATH)
         self.__cur: sqlite3.Cursor
+        self.__user_name = user_name
 
         self.__cur = self.__con.cursor()
 
@@ -57,7 +58,7 @@ class User():
             return f'{self.__last_name} {self.__first_name}'
         
 
-    def is_admin(self):
+    def is_admin(self) -> bool:
         return self.__user_type == 2
 
     def get_ytra(self):
@@ -74,3 +75,41 @@ class User():
                 self.__seconds % 60
             )
         return self.__seconds
+    
+    def get_user_name(self) -> str:
+        return self.__user_name
+    
+    def recharge(self, amount) -> bool:
+
+        url = 'http://localhost:8414/LocalSaferServer'  # Replace with your server URL
+
+        payload =  f'''<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+        <s:Body>
+        <CreatePaymentForUser xmlns="http://tempuri.org/">
+        <userId>{self.__id}</userId>
+        <amount>{amount}</amount>
+        <PaymentMethodeName/></CreatePaymentForUser>
+        </s:Body>
+        </s:Envelope>'''
+
+        len_in_bites = len(payload.encode('utf-8'))
+
+        headers = {
+            "Content-Type": "text/xml; charset=utf-8",
+            "SOAPAction": "http://tempuri.org/ILocalSaferServer/CreatePaymentForUser",
+            "Host": "localhost:8414",
+            "Content-Length": f'{len_in_bites}',
+            "Expect": "100-continue",
+            "Accept-Encoding": "gzip, deflate",
+            "Connection": "Keep-Alive"
+        }
+
+        response = requests.post(url, data=payload, headers=headers)
+
+        if response.status_code == 200:
+            print("Payment successful!")
+            print(response.text)  # Print the server's response
+            return True
+        else:
+            print(f"Login failed with status code: {response.status_code}")
+            return False

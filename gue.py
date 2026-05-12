@@ -1,9 +1,7 @@
-import tkinter as tk, client, subprocess
+import tkinter as tk, subprocess
 from payments import *
 from tkinter import EventType
-
-
-user_data = {}
+import safer
 
 
 def mange_conf(id):
@@ -24,7 +22,7 @@ def change_color(e: tk.Event):
 
 def lable_click_un(e: tk.Event):
 
-    global user_data
+    global safer_user
 
     if e.type == EventType.Key:
         if e.keycode != 13:
@@ -43,17 +41,16 @@ def lable_click_un(e: tk.Event):
         return
 
     try:
-        data = get_user_data(user_name)
+        safer_user = safer.User(user_name, password_required=False)
     except Exception as ValueError:
         input_user_name.delete(0, 'end')
         lable_under['text'] = 'תעודת זהות שגויה'
         return
 
 
-    user_data = data
     lable_under['text'] = ''
-    lable_high['text'] = 'שלום {}'.format(user_data['name'])
-    lable_user_name['text'] = 'יתרתך: ₪{}'.format(round(user_data['ytra'], 2))
+    lable_high['text'] = f'שלום {safer_user.get_full_name()}'
+    lable_user_name['text'] = f'יתרתך: ₪{round(safer_user.get_ytra(), 2)}'
     lable_ytra['text'] = ':לטעינה הקש קוד'
     input_user_name.delete(0, 'end')
     input_user_name['show'] = ''
@@ -61,15 +58,18 @@ def lable_click_un(e: tk.Event):
     lable_click.bind('<Button-1>', lable_click_vf)
     input_user_name.bind('<Key>', lable_click_vf)
 
-    if user_data['usertype']:
+    if safer_user.is_admin():
         mnager_click.place(width=100, height=30, x=50, y=240)
         mnager_click.bind('<Button-1>', admin_login)
 
 
 def lable_click_vf(e: tk.Event):
 
-    if user_data['count'] > 2:
-        block_user(user_data['username'])
+    global count
+    count = 0
+
+    if count > 2:
+        block_user(safer_user.get_user_name())
         root.quit()
 
     if e.type == EventType.Key:
@@ -78,7 +78,7 @@ def lable_click_vf(e: tk.Event):
 
     code = input_user_name.get()
 
-    if len(code) != 4 or not code.isdigit():
+    if len(code) != 6 or not code.isdigit():
         input_user_name.delete(0, 'end')
         lable_under['text'] = 'קוד שגוי'
         return
@@ -86,16 +86,16 @@ def lable_click_vf(e: tk.Event):
     status = find_if_code_is_true(code)
 
     if not status[0]:
-        user_data['count'] += 1
+        count += 1
         input_user_name.delete(0, 'end')
         lable_under['text'] = 'קוד שגוי'
         return
     
     if status[0]:
         lable_under['text'] = ''
-        status_charge = client.main(user_data['id'], status[1])
-        code_not_active(code, user_data['name'])
-        lable_user_name['text'] = 'יתרתך ₪{}'.format(int((user_data['ytra']) + status[1]))
+        status_charge = safer_user.recharge(status[1])
+        code_not_active(code, safer_user.get_full_name())
+        lable_user_name['text'] = 'יתרתך ₪{}'.format(int((safer_user.get_ytra()) + status[1]))
         input_user_name.place(width=0)
 
     if status_charge:
@@ -103,7 +103,7 @@ def lable_click_vf(e: tk.Event):
         lable_under['text'] = ''
     else:
         lable_ytra['text'] = ''
-        lable_user_name['text'] = 'יתרתך ₪{}'.format(int(user_data['ytra']))
+        lable_user_name['text'] = 'יתרתך ₪{}'.format(int(safer_user.get_ytra()))
         lable_under['text'] = 'טעינה נכשלה, פנה למנהל'
 
     input_user_name.bind('<Key>', end_gue)
@@ -115,9 +115,9 @@ def end_gue(e: tk.Event):
 
 
 def c_f_code(e: tk.Event):
-    code_file = f'{PROGRAM_DATA_BASE}\\codes{user_data["id"]}.txt'
-    link_file = f'{USER_DESKTOP}\\codes{user_data["name"]}.txt'
-    manager = user_data['id']
+    code_file = f'{PROGRAM_DATA_BASE}\\codes{safer_user.get_id()}.txt'
+    link_file = f'{USER_DESKTOP}\\codes{safer_user.get_full_name()}.txt'
+    manager = safer_user.get_id()
 
     if str(manager) not in config.sections():
         section = 'GLOBAL PAY OPTIONS'
@@ -160,7 +160,7 @@ def manager_settings(e: tk.Event):
     setting_click['text'] = 'אישור'
     kill_program_click.destroy()
     mnager_click.destroy()
-    settings = mange_conf(user_data['id'])
+    settings = mange_conf(safer_user.get_id())
     payments = settings['payments']
     limit = settings['limit']
 
@@ -187,11 +187,11 @@ def active_set(e: tk.Event):
     except:
         return
 
-    if not str(user_data['id']) in config.sections():
-        config[str(user_data['id'])] = {}
+    if not str(safer_user.get_id()) in config.sections():
+        config[str(safer_user.get_id())] = {}
 
-    config[str(user_data['id'])]['payments'] = pay_ent.get()
-    config[str(user_data['id'])]['limit'] = lim_ent.get()
+    config[str(safer_user.get_id())]['payments'] = pay_ent.get()
+    config[str(safer_user.get_id())]['limit'] = lim_ent.get()
 
     with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
         config.write(f)

@@ -1,18 +1,16 @@
 import sqlite3, os, requests
 
 
-DB_PATH = f'{os.environ['PROGRAMDATA']}\\KioskTorani\\LocalSaferServer.db'
-
-
 class User():
 
     def __init__(
             self,
+            db_path: str,
             user_name: str,
             password: str = "",
             password_required: bool =True):
 
-        self.__con = sqlite3.connect(DB_PATH)
+        self.__con = sqlite3.connect(db_path)
         self.__cur: sqlite3.Cursor
         self.__user_name = user_name
 
@@ -51,11 +49,8 @@ class User():
         return self.__id
     
     
-    def get_full_name(self, last_name_last=True):
-        if last_name_last:
-            return f'{self.__first_name} {self.__last_name}'
-        else:
-            return f'{self.__last_name} {self.__first_name}'
+    def get_full_name(self, last_name_last=True) -> str:
+        return f'{self.__first_name} {self.__last_name}' if last_name_last else f'{self.__last_name} {self.__first_name}'
         
 
     def is_admin(self) -> bool:
